@@ -60,25 +60,73 @@ Relationships:
 
 ## How to build & run
 
-### Prerequisites
+### Option A — Supabase (cloud / “global” database)
+
+#### 1. Install dependencies
+
+```bash
+cd "8.6 Permalist Project"
+npm install
+```
+
+#### 2. Create `.env`
+
+Copy the example file:
+
+```bash
+copy .env.example .env
+```
+
+Open `.env` and set your **database password** (Supabase → **Project Settings** → **Database** → Database password):
+
+```env
+DATABASE_URL=postgresql://postgres:YOUR_REAL_PASSWORD@db.qmqjarwipghzaaayouhw.supabase.co:5432/postgres
+PORT=3000
+```
+
+If your password has special characters (`@`, `#`, `%`, etc.), [URL-encode](https://www.urlencoder.org/) them in the connection string.
+
+#### 3. Create tables in Supabase
+
+1. Open [Supabase Dashboard](https://supabase.com/dashboard) → your project  
+2. Go to **SQL Editor** → **New query**  
+3. Paste everything from `queries.sql`  
+4. Click **Run**
+
+#### 4. Start the app
+
+```bash
+npm start
+```
+
+Open http://localhost:3000
+
+> You do **not** need the Supabase publishable/anon key for this project — it uses the Postgres connection (`pg`), not the Supabase JS client.  
+> `supabase login` / `init` / `link` are optional (CLI only). The steps above are enough.
+
+---
+
+### Option B — Local PostgreSQL
+
+#### Prerequisites
 
 - [Node.js](https://nodejs.org/) installed
 - [PostgreSQL](https://www.postgresql.org/) installed and running
 - pgAdmin or `psql` to run SQL scripts
 
-### 1. Clone / open the project
+#### 1. Clone / open the project
 
 ```bash
 cd "8.6 Permalist Project"
 ```
 
-### 2. Install dependencies
+#### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Create the database
+#### 3. Create the database
 
 In pgAdmin or `psql`:
 
@@ -86,26 +134,18 @@ In pgAdmin or `psql`:
 CREATE DATABASE permalist;
 ```
 
-### 4. Run the schema & seed data
+#### 4. Run the schema & seed data
 
-Open `queries.sql` and execute it against the `permalist` database.  
-This creates `users`, `categories`, and `tasks`, and inserts sample data.
+Open `queries.sql` and execute it against the `permalist` database.
 
-### 5. Configure database credentials
+#### 5. Configure `.env`
 
-In `index.js`, update if needed:
-
-```js
-const db = new pg.Client({
-  user: "postgres",
-  host: "localhost",
-  database: "permalist",
-  password: "123456",  // change to your Postgres password
-  port: 5432,
-});
+```env
+DATABASE_URL=postgresql://postgres:YOUR_LOCAL_PASSWORD@localhost:5432/permalist
+PORT=3000
 ```
 
-### 6. Start the server
+#### 6. Start the server
 
 ```bash
 npm start

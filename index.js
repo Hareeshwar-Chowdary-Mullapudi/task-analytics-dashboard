@@ -1,18 +1,67 @@
 import express from "express";
 import bodyParser from "body-parser";
 import pg from "pg";
+import dns from "node:dns";
+import { resolve6 } from "node:dns/promises";
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-const db = new pg.Client({
-  user: "postgres",
-  host: "localhost",
-  database: "permalist",
-  password: "123456",
-  port: 5432,
-});
-db.connect();
+// Prefer public DNS so Supabase IPv6 hostnames resolve on Windows
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+
+// Build DB config. Supabase "direct" host is often IPv6-only;
+// Windows then throws ENOTFOUND — resolve AAAA and connect by IP.
+async function createDbClient() {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is missing. Add it to your .env file.");
+  }
+
+  const useSsl = connectionString.includes("supabase");
+  let config = {
+    connectionString,
+    ssl: useSsl ? { rejectUnauthorized: false } : false,
+  };
+
+  const hostMatch = connectionString.match(/@([^:/?\[]+)/);
+  const host = hostMatch?.[1];
+
+  if (host?.startsWith("db.") && host.endsWith(".supabase.co")) {
+    try {
+      const ipv6 = await resolve6(host);
+      if (ipv6[0]) {
+        config = {
+          connectionString: connectionString.replace(
+            `@${host}`,
+            `@[${ipv6[0]}]`
+          ),
+          ssl: {
+            rejectUnauthorized: false,
+            servername: host,
+          },
+        };
+        console.log("Using Supabase IPv6 address (direct connection).");
+      }
+    } catch (err) {
+      console.error("Could not resolve Supabase host:", err.message);
+      console.error(
+        "In Supabase → Database → Connection string, copy Session pooler URI into .env instead."
+      );
+    }
+  }
+
+  return new pg.Client(config);
+}
+
+const db = await createDbClient();
+try {
+  await db.connect();
+  console.log("Database connected.");
+} catch (err) {
+  console.error("Database connection failed:", err.message);
+  console.error("Check DATABASE_URL in your .env file.");
+}
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));

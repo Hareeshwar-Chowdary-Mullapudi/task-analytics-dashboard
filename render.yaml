@@ -1,0 +1,13 @@
+# Optional Render Blueprint — you can also configure the same settings in the Render dashboard
+services:
+  - type: web
+    name: task-analytics-dashboard
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        sync: false
