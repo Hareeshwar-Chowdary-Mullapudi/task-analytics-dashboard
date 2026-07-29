@@ -3,10 +3,7 @@
 A PostgreSQL-backed task manager with a built-in analytics dashboard.  
 Started as a simple persistent to-do list (Permalist) and extended to track categories, priority, and completion dates — then visualize productivity with real SQL analytics.
 
----
-
 *Live Demo*:https://task-analytics-dashboard-2k40.onrender.com/
-
 ---
 ## What this project is about
 
