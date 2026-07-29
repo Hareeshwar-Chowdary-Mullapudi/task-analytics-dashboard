@@ -80,7 +80,7 @@ copy .env.example .env
 Open `.env` and set your **database password** (Supabase → **Project Settings** → **Database** → Database password):
 
 ```env
-DATABASE_URL=postgresql://postgres:YOUR_REAL_PASSWORD@db.qmqjarwipghzaaayouhw.supabase.co:5432/postgres
+DATABASE_URL=postgresql://postgres.qmqjarwipghzaaayouhw:YOUR_PASSWORD@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres
 PORT=3000
 ```
 
@@ -90,13 +90,13 @@ If your password has special characters (`@`, `#`, `%`, etc.), [URL-encode](http
 
 1. Open [Supabase Dashboard](https://supabase.com/dashboard) → your project  
 2. Go to **SQL Editor** → **New query**  
-3. Paste everything from `queries.sql`  
+3. Paste the setup SQL from `queries.sql` (CREATE + INSERT, not the commented practice section)  
 4. Click **Run**
 
-#### 4. Start the app
+#### 4. Start the app (local)
 
 ```bash
-npm start
+npm run dev
 ```
 
 Open http://localhost:3000
@@ -148,7 +148,7 @@ PORT=3000
 #### 6. Start the server
 
 ```bash
-npm start
+npm run dev
 ```
 
 Open: [http://localhost:3000](http://localhost:3000)
@@ -157,6 +157,70 @@ Open: [http://localhost:3000](http://localhost:3000)
 |------|-----|
 | Tasks | http://localhost:3000/ |
 | Analytics | http://localhost:3000/analytics |
+
+---
+
+## Deploy live (Render + Supabase) — world-accessible
+
+Architecture:
+
+- **Database:** Supabase (already cloud)
+- **Web app:** [Render](https://render.com) free Web Service
+
+### 1. Push code to GitHub
+
+Your repo: `https://github.com/Hareeshwar-Chowdary-Mullapudi/task-analytics-dashboard`
+
+```bash
+git add .
+git commit -m "Prepare app for Render deployment"
+git push origin main
+```
+
+Do **not** commit `.env` (it is in `.gitignore`).
+
+### 2. Create a Render Web Service
+
+1. Sign up / log in at https://dashboard.render.com with GitHub  
+2. **New +** → **Web Service**  
+3. Connect the repo `task-analytics-dashboard`  
+4. Settings:
+
+| Setting | Value |
+|---------|--------|
+| Runtime | Node |
+| Build Command | `npm install` |
+| Start Command | `npm start` |
+| Instance type | Free |
+
+### 3. Add environment variable on Render
+
+**Environment** → **Add Environment Variable**:
+
+| Key | Value |
+|-----|--------|
+| `DATABASE_URL` | Same **Session pooler** URI as in your local `.env` |
+
+Example shape (use your real password):
+
+```text
+postgresql://postgres.qmqjarwipghzaaayouhw:YOUR_PASSWORD@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres
+```
+
+### 4. Deploy
+
+Click **Create Web Service**. Wait for the build to finish (green).  
+Your live URL looks like:
+
+`https://task-analytics-dashboard-xxxx.onrender.com`
+
+Anyone in the world can open that link.
+
+### Notes
+
+- Free Render apps **sleep after ~15 minutes** idle; first load after sleep can take ~30–60 seconds.  
+- Keep using **Session pooler** (not the `db.*` direct host) so Render can reach Supabase over IPv4.  
+- Tables must already exist in Supabase (run `queries.sql` once in SQL Editor).
 
 ---
 
