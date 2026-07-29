@@ -23,7 +23,7 @@ Users can:
   - Fastest completions per user
   - Monthly productivity
 
-The focus is **practical SQL** — joins, aggregates, CTEs, and window functions — in a small app you can explain in an interview.
+The focus is **practical SQL** — joins, aggregates, CTEs, and window functions.
 
 ---
 
