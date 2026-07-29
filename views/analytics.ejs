@@ -1,0 +1,148 @@
+<%- include('partials/header.ejs'); -%>
+
+  <div class="box wide" id="heading">
+    <h1>Task Analytics</h1>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Tasks</div>
+      <div class="stat-value"><%= completionRate.total_tasks %></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Completed</div>
+      <div class="stat-value"><%= completionRate.completed_tasks %></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Completion Rate</div>
+      <div class="stat-value"><%= completionRate.completion_rate_pct || 0 %>%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg Days to Finish</div>
+      <div class="stat-value"><%= avgDays != null ? avgDays : '—' %></div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <!-- GROUP BY -->
+    <section class="panel">
+      <h2>Tasks Completed Per Day</h2>
+      <p class="sql-hint">GROUP BY completed_at</p>
+      <table>
+        <tr><th>Date</th><th>Done</th></tr>
+        <% for (let row of perDay) { %>
+          <tr>
+            <td><%= row.day ? new Date(row.day).toLocaleDateString() : '—' %></td>
+            <td><%= row.tasks_done %></td>
+          </tr>
+        <% } %>
+        <% if (perDay.length === 0) { %><tr><td colspan="2">No data yet</td></tr><% } %>
+      </table>
+    </section>
+
+    <!-- RANK() -->
+    <section class="panel">
+      <h2>Most Productive Weekday</h2>
+      <p class="sql-hint">GROUP BY + RANK()</p>
+      <table>
+        <tr><th>Weekday</th><th>Done</th><th>Rank</th></tr>
+        <% for (let row of productiveDay) { %>
+          <tr>
+            <td><%= row.weekday %></td>
+            <td><%= row.tasks_done %></td>
+            <td>#<%= row.productivity_rank %></td>
+          </tr>
+        <% } %>
+        <% if (productiveDay.length === 0) { %><tr><td colspan="3">No data yet</td></tr><% } %>
+      </table>
+    </section>
+
+    <!-- JOIN + HAVING -->
+    <section class="panel">
+      <h2>Category-wise Completion</h2>
+      <p class="sql-hint">JOIN + GROUP BY + HAVING COUNT(*) &gt;= 2</p>
+      <table>
+        <tr><th>Category</th><th>Completed</th></tr>
+        <% for (let row of byCategory) { %>
+          <tr>
+            <td><%= row.category %></td>
+            <td><%= row.completed %></td>
+          </tr>
+        <% } %>
+        <% if (byCategory.length === 0) { %><tr><td colspan="2">No data yet</td></tr><% } %>
+      </table>
+    </section>
+
+    <!-- GROUP BY priority -->
+    <section class="panel">
+      <h2>Priority Completion</h2>
+      <p class="sql-hint">GROUP BY priority</p>
+      <table>
+        <tr><th>Priority</th><th>Completed</th></tr>
+        <% for (let row of byPriority) { %>
+          <tr>
+            <td><span class="badge priority-<%= row.priority.toLowerCase() %>"><%= row.priority %></span></td>
+            <td><%= row.completed %></td>
+          </tr>
+        <% } %>
+        <% if (byPriority.length === 0) { %><tr><td colspan="2">No data yet</td></tr><% } %>
+      </table>
+    </section>
+
+    <!-- CTE + LAG() -->
+    <section class="panel">
+      <h2>Daily Trend (vs Previous Day)</h2>
+      <p class="sql-hint">CTE + LAG()</p>
+      <table>
+        <tr><th>Date</th><th>Done</th><th>Prev Day</th><th>Change</th></tr>
+        <% for (let row of dailyTrend) { %>
+          <tr>
+            <td><%= row.day ? new Date(row.day).toLocaleDateString() : '—' %></td>
+            <td><%= row.tasks_done %></td>
+            <td><%= row.previous_day != null ? row.previous_day : '—' %></td>
+            <td class="<%= row.change_from_prev > 0 ? 'up' : (row.change_from_prev < 0 ? 'down' : '') %>">
+              <%= row.change_from_prev != null ? (row.change_from_prev > 0 ? '+' : '') + row.change_from_prev : '—' %>
+            </td>
+          </tr>
+        <% } %>
+        <% if (dailyTrend.length === 0) { %><tr><td colspan="4">No data yet</td></tr><% } %>
+      </table>
+    </section>
+
+    <!-- Monthly -->
+    <section class="panel">
+      <h2>Monthly Productivity</h2>
+      <p class="sql-hint">GROUP BY month</p>
+      <table>
+        <tr><th>Month</th><th>Done</th></tr>
+        <% for (let row of monthly) { %>
+          <tr>
+            <td><%= row.month %></td>
+            <td><%= row.tasks_done %></td>
+          </tr>
+        <% } %>
+        <% if (monthly.length === 0) { %><tr><td colspan="2">No data yet</td></tr><% } %>
+      </table>
+    </section>
+
+    <!-- ROW_NUMBER() -->
+    <section class="panel wide-panel">
+      <h2>Fastest Completions (Top 3 per User)</h2>
+      <p class="sql-hint">JOIN + ROW_NUMBER()</p>
+      <table>
+        <tr><th>User</th><th>Task</th><th>Days Taken</th><th>Rank</th></tr>
+        <% for (let row of fastestTasks) { %>
+          <tr>
+            <td><%= row.user_name %></td>
+            <td><%= row.title %></td>
+            <td><%= row.days_taken %></td>
+            <td>#<%= row.speed_rank %></td>
+          </tr>
+        <% } %>
+        <% if (fastestTasks.length === 0) { %><tr><td colspan="4">No data yet</td></tr><% } %>
+      </table>
+    </section>
+  </div>
+
+<%- include('partials/footer.ejs'); -%>

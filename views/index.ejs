@@ -1,0 +1,76 @@
+<%- include('partials/header.ejs'); -%>
+
+  <div class="box" id="heading">
+    <h1><%= listTitle %></h1>
+  </div>
+
+  <div class="box">
+    <% for (let item of listItems) { %>
+      <div class="item <%= item.is_completed ? 'done' : '' %>">
+        <% if (!item.is_completed) { %>
+          <form action="/complete" method="post">
+            <input type="checkbox" onchange="this.form.submit()"
+              name="completeItemId" value="<%= item.id %>" title="Mark complete">
+          </form>
+        <% } else { %>
+          <input type="checkbox" checked disabled>
+        <% } %>
+
+        <div class="task-info">
+          <p id="title<%= item.id %>" class="<%= item.is_completed ? 'strike' : '' %>">
+            <%= item.title %>
+          </p>
+          <div class="meta">
+            <span class="badge category"><%= item.category || 'General' %></span>
+            <span class="badge priority-<%= (item.priority || 'Medium').toLowerCase() %>">
+              <%= item.priority %>
+            </span>
+          </div>
+        </div>
+
+        <% if (!item.is_completed) { %>
+          <form class="edit" action="/edit" method="post">
+            <input type="hidden" name="updatedItemId" value="<%= item.id %>">
+            <input id="input<%= item.id %>" type="text" name="updatedItemTitle"
+              value="<%= item.title %>" autocomplete="off" hidden />
+            <button id="done<%= item.id %>" class="edit" type="submit" hidden>
+              <img class="icon" src="/assets/icons/check-solid.svg" alt="save">
+            </button>
+          </form>
+          <button id="edit<%= item.id %>" class="edit" onclick="handler('<%= item.id %>')">
+            <img class="icon" src="/assets/icons/pencil-solid.svg" alt="edit">
+          </button>
+        <% } %>
+
+        <form action="/delete" method="post" class="delete-form">
+          <button type="submit" name="deleteItemId" value="<%= item.id %>" class="delete-btn"
+            title="Delete">×</button>
+        </form>
+      </div>
+    <% } %>
+
+    <form class="item add-form" action="/add" method="post">
+      <input type="text" name="newItem" placeholder="New task" autocomplete="off" required />
+      <select name="categoryId" required>
+        <% for (let cat of categories) { %>
+          <option value="<%= cat.id %>"><%= cat.name %></option>
+        <% } %>
+      </select>
+      <select name="priority">
+        <option value="High">High</option>
+        <option value="Medium" selected>Medium</option>
+        <option value="Low">Low</option>
+      </select>
+      <button class="add" type="submit">+</button>
+    </form>
+  </div>
+
+  <script>
+    function handler(id) {
+      document.getElementById("title" + id).setAttribute("hidden", true);
+      document.getElementById("edit" + id).setAttribute("hidden", true);
+      document.getElementById("done" + id).removeAttribute("hidden");
+      document.getElementById("input" + id).removeAttribute("hidden");
+    }
+  </script>
+<%- include('partials/footer.ejs'); -%>
